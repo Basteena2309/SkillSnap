@@ -1,0 +1,11 @@
+{
+  "name": "certificate-generator",
+  "version": "1.0.0",
+  "main": "generate.js",
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  },
+  "scripts": {
+    "generate": "node generate.js"
+  }
+}
