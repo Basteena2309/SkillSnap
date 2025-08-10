@@ -1,0 +1,101 @@
+// Choose your DB provider
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  LEARNER
+  INSTRUCTOR
+  ADMIN
+}
+
+model User {
+  id           String       @id @default(uuid())
+  name         String
+  email        String       @unique
+  password     String
+  role         Role         @default(LEARNER)
+  createdAt    DateTime     @default(now())
+
+  lessons      Lesson[]     @relation("UserLessons")
+  quizAttempts QuizAttempt[]
+  certificates Certificate[]
+  progress     Progress[]
+}
+
+model Lesson {
+  id          String      @id @default(uuid())
+  title       String
+  content     String      // markdown or HTML
+  category    String
+  createdBy   String
+  createdAt   DateTime    @default(now())
+
+  creator     User        @relation("UserLessons", fields: [createdBy], references: [id])
+  quiz        Quiz?
+  progress    Progress[]
+  certificates Certificate[]
+}
+
+model Quiz {
+  id        String      @id @default(uuid())
+  lessonId  String      @unique
+  createdAt DateTime    @default(now())
+
+  lesson    Lesson      @relation(fields: [lessonId], references: [id])
+  questions Question[]
+  attempts  QuizAttempt[]
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  quizId        String
+  questionText  String
+  options       String[] // Array of options
+  correctAnswer String
+
+  quiz          Quiz     @relation(fields: [quizId], references: [id])
+}
+
+model QuizAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  quizId      String
+  score       Int
+  passed      Boolean
+  attemptDate DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  certificate Certificate?
+}
+
+model Certificate {
+  id              String   @id @default(uuid())
+  userId          String
+  lessonId        String
+  quizAttemptId   String
+  certificateUrl  String
+  publicId        String   @unique
+  issuedAt        DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id])
+  lesson          Lesson   @relation(fields: [lessonId], references: [id])
+  quizAttempt     QuizAttempt @relation(fields: [quizAttemptId], references: [id])
+}
+
+model Progress {
+  id          String   @id @default(uuid())
+  userId      String
+  lessonId    String
+  completed   Boolean  @default(false)
+  lastVisited DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+  lesson      Lesson   @relation(fields: [lessonId], references: [id])
+}
